@@ -15,7 +15,7 @@ class protocol:
         self.spektrendf = self.dfspektren()
 
         self.summarkerdf = (
-            self.markerdf.groupby('Marker')[['LAeq', 'LCeq', 'LAFmax', 'LAFTeq']]
+            self.markerdf.groupby('Marker')[['LAeq', 'LCeq', 'LAFmax', 'LAFTeq', 'LAeq_95']]
             .apply(lambda df: 10 * np.log10((10 ** (df / 10)).mean()))
             .reset_index()
         )
@@ -116,14 +116,20 @@ class protocol:
             # Format the time difference as a string
             time_diff_str = f"{hours:02}:{minutes:02}:{seconds:02}"
             row = {'Startzeit': start, 'Endzeit': end, 'Marker': marker, 'Startuhrzeit': start_time.strftime('%H:%M:%S'), 'Enduhrzeit': end_time.strftime('%H:%M:%S'), 'Zeit': time_diff_str}
-            for col in ['LAeq', 'LAFmax', 'LCeq', 'LAFTeq']:
-                values = df.loc[mask, col].values
+            for col in ['LAeq', 'LAFmax', 'LCeq', 'LAFTeq', "LAeq_95"]:
+                if col== "LAeq_95":
+                    values = df.loc[mask, 'LAeq'].values
+                else:
+                    values = df.loc[mask, col].values
                 if col == 'LAFmax':
                     if len(values) > 0:
                         max_value = values.max()
                     else:
                         max_value = np.nan
                     row[f'{col}'] = max_value
+                elif col == 'LAeq_95':
+                    if len(values) > 0:
+                        row[f'{col}'] = np.quantile(values, 0.05)
                 else:
                     if len(values) > 0:
                         linear = 10 ** (values / 10)

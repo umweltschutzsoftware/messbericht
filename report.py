@@ -45,12 +45,14 @@ def renderreport(p, metadata):
     markerdf["tLAFmax"] = markerdf["LAFmax"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     markerdf["tLCeq"] = markerdf["LCeq"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     markerdf["tK_I"] = markerdf["K_I"].apply(lambda x: f"{x:.1f}".replace(".", ","))
+    markerdf["tLAeq_95"] = markerdf["LAeq_95"].apply(lambda x: f"{x:.1f}".replace(".", ","))
 
     summarkerdf["tLAeq"] = summarkerdf["LAeq"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     summarkerdf["tLAFTeq"] = summarkerdf["LAFTeq"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     summarkerdf["tLAFmax"] = summarkerdf["LAFmax"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     summarkerdf["tLCeq"] = summarkerdf["LCeq"].apply(lambda x: f"{x:.1f}".replace(".", ","))
     summarkerdf["tK_I"] = summarkerdf["K_I"].apply(lambda x: f"{x:.1f}".replace(".", ","))
+    summarkerdf["tLAeq_95"] = summarkerdf["LAeq_95"].apply(lambda x: f"{x:.1f}".replace(".", ","))
 
 
 
