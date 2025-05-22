@@ -21,15 +21,18 @@ if uploaded_file is not None:
 
     thema = st.text_input("Thema", "Immissionsmessung, Tagzeit, MP01")
 
+    beschreibung = st.text_area("Beschreibung", "Die Messung wurde durchgeführt, um die Schallimmissionen der Musterfirma GmbH zu überprüfen. Die Messung fand am 01.01.2023 statt. Die Wetterbedingungen waren optimal für die Messung.")
+
     filename = st.text_input("Dateiname", "Messbericht.docx")
 
     metadata = {}
     metadata["titel"] = titel
     metadata["thema"] = thema
+    metadata["beschreibung"] = beschreibung
     #metadata["marker_names"] = marker_names
 
     st.download_button(
         "Bericht herunterladen", 
         data=renderreport(measuringprotocol, metadata), 
-        file_name="filename", 
+        file_name=filename, 
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
