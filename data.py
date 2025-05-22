@@ -36,8 +36,8 @@ class protocol:
         df['Markers'] = df['Markers'].str.replace('Stop;', '', regex=False)
 
         # Calculate the LAFTeq
-        # Calculate LAFTeq: mean of LAFmax over rolling 5-row (5s) intervals
-        df['LAFTeq'] = df['LAFmax'].rolling(window=5, min_periods=1).mean()
+        # Calculate LAFTeq: LAFmax over rolling 5-row (5s) intervals
+        df['LAFTeq'] = df['LAFmax'].rolling(window=5, min_periods=1).max()
 
         # Add a column Stunden with only hours and minutes
         df['Startuhrzeit'] = pd.to_datetime(df['Zeitstempel']).dt.strftime('%H:%M:%S')
