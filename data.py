@@ -34,6 +34,8 @@ class protocol:
         df = pd.read_excel(self.stfile, sheet_name='Profile', skiprows=1, usecols="A:E", names=["Zeitstempel", "LAeq", "LAFmax", "LCeq", "Markers"])
         df['Markers'] = df['Markers'].str.replace('Battery;', '', regex=False)
         df['Markers'] = df['Markers'].str.replace('Stop;', '', regex=False)
+        df['Markers'] = df['Markers'].str.replace('Audio-recording;', '', regex=False)
+        df['Markers'] = df['Markers'].str.replace('Event0;', '', regex=False)
 
         # Calculate the LAFTeq
         # Calculate LAFTeq: LAFmax over rolling 5-row (5s) intervals
