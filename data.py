@@ -12,7 +12,6 @@ class protocol:
         self.startdate = self.info["startdate"]
 
         self.markerdf = self.dfmarker()
-        self.spektrendf = self.dfspektren()
 
         self.summarkerdf = (
             self.markerdf.groupby('Marker')[['LAeq', 'LCeq', 'LAFmax', 'LAFTeq', 'LAeq_95']]
@@ -31,7 +30,11 @@ class protocol:
 
 
     def dfprocotol(self):
-        df = pd.read_excel(self.stfile, sheet_name='Profile', skiprows=1, usecols="A:E", names=["Zeitstempel", "LAeq", "LAFmax", "LCeq", "Markers"])
+        # A:E = Zeitstempel/LAeq/LAFmax/LCeq/Markers, F:AJ = Lfeq-Terzspektrum (31 Bänder)
+        df = pd.read_excel(self.stfile, sheet_name='Profile', skiprows=1, usecols="A:AJ")
+        df = df.rename(columns={
+            df.columns[0]: "Zeitstempel", df.columns[1]: "LAeq",
+            df.columns[2]: "LAFmax", df.columns[3]: "LCeq", df.columns[4]: "Markers"})
         df['Markers'] = df['Markers'].str.replace('Battery;', '', regex=False)
         df['Markers'] = df['Markers'].str.replace('Stop;', '', regex=False)
         df['Markers'] = df['Markers'].str.replace('Audio-recording;', '', regex=False)
@@ -145,15 +148,24 @@ class protocol:
         markersdf = pd.DataFrame(markers_data)
         return markersdf
     
-    def dfspektren(self):
-        spektren = pd.read_excel(
-            self.stfile,
-            sheet_name='Global',
-            usecols='BA:CE',
-            skiprows=1,
-            nrows=1
-        ).T
-        spektren.columns = ['dB(A)']
-        spektren.index.name = 'Frequenz'
-        spektren.index = spektren.index.str.replace('G3_FRQ_LEQ_', '', regex=False)
+    def dfspektren(self, marker="Gesamt"):
+        # Lfeq-Terzspektrum je Marker: energetischer Mittelwert der Lfeq-Bänder
+        # über die zum Marker gehörenden Zeilen des Profils.
+        df = self.protocoldf
+        band_cols = [c for c in df.columns if str(c).startswith("Lfeq ")]
+        if marker == "Gesamt":
+            mask = pd.Series(True, index=df.index)
+        elif marker == "Ohne Marker":
+            mask = df["Markers"].str.strip() == ""
+        else:
+            mask = df["Markers"].apply(
+                lambda s: marker in [m.strip() for m in str(s).split(";") if m.strip()])
+        vals = df.loc[mask, band_cols]
+        if len(vals) == 0 and marker != "Gesamt":      # Marker in dieser Datei nicht vorhanden
+            vals = df[band_cols]                        # Fallback: Gesamt
+        leq = 10 * np.log10((10 ** (vals / 10)).mean())
+        spektren = leq.to_frame("dB")
+        spektren.index = [c.replace("Lfeq ", "").replace(" [dB]", "").replace(" ", "")
+                          for c in band_cols]            # -> "20Hz","31,5Hz","1,25kHz","20kHz"
+        spektren.index.name = "Frequenz"
         return spektren

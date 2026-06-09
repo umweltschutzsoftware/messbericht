@@ -58,31 +58,39 @@ def plot_laeq(p):
     plt.legend()
     filename = generate_random_filename()
     plt.savefig(filename + '.png')
+    plt.close()
     return filename + '.png'
 
 
 def plot_spektren(spektrendf):
-    # Entferne alle Zusatz Hz als Einheit
-    spektrendf.index = spektrendf.index.str.replace(' Hz', '')
-    # Entferne alle Zusatz kHz und setze nur k
-    spektrendf.index = spektrendf.index.str.replace(' kHz', 'k')
-    # Reduziere die Anzahl Anzahl der xticks auf 10, aber zeige alle Werte
-    #x_ticks = spektren['Frequenz'].iloc[::int(len(spektren['Frequenz'])/5)]
+    # Arbeite auf einer Kopie, damit der übergebene DataFrame nicht verändert wird
+    spektrendf = spektrendf.copy()
+    # Bereinige die Frequenz-Labels für die Darstellung: "20Hz" -> "20", "1kHz" -> "1k"
+    spektrendf.index = spektrendf.index.str.replace('kHz', 'k', regex=False)
+    spektrendf.index = spektrendf.index.str.replace('Hz', '', regex=False)
 
+    # Nutze Arial als Schriftart und die DIN A4 Breite
+    plt.rcParams['font.family'] = 'Arial'
 
-    # Zeige die Spektren in einem Balkendiagramm an
-    # Die x Achse beschreibt jede Spalte
-    # Der Titel ist die Frequenz, d.h. jeder Spaltenname ohne den Präfix LAeq   
-    # Die y Achse beschreibt den Wert der Spalte
-    spektrendf.plot(kind='bar', figsize=(8.27, 3), width=0.8, color='black', legend=False, grid=True)
+    # Zeige das Lfeq-Terzspektrum als Balkendiagramm an
+    # x-Achse: Frequenz (Terzband), y-Achse: unbewerteter Pegel in dB
+    ax = spektrendf.plot(kind='bar', figsize=(8.27, 3.6), width=0.8,
+                         color='black', legend=False, grid=True)
+    ax.set_axisbelow(True)  # Gitter hinter die Balken legen
     plt.xlabel('Frequenz [Hz]')
-    plt.ylabel('dB(A)')
-    plt.tight_layout()
+    plt.ylabel('dB')
     plt.grid(True, linestyle='-', alpha=0.5)
-    plt.xlabel('Frequenz [Hz]')
-    plt.gca().set_axisbelow(True)  # Set the bars in front of the grid
+    plt.xticks(rotation=90)
+
+    # Zahlenwerte über den Balken anzeigen (deutsches Komma, eine Nachkommastelle)
+    werte = spektrendf.iloc[:, 0]
+    ax.set_ylim(0, werte.max() + 8)
+    labels = [f"{v:.1f}".replace(".", ",") for v in werte]
+    ax.bar_label(ax.containers[0], labels=labels, rotation=90,
+                 padding=2, fontsize=6)
+
     plt.tight_layout()
-    plt.grid(True, linestyle='-', alpha=0.5)
     filename = generate_random_filename()
     plt.savefig(filename + '.png')
+    plt.close()
     return filename + '.png'

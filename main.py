@@ -6,16 +6,27 @@ import pandas as pd
 st.title('Messbericht')
 st.markdown('Erzeugung eines Messberichts schalltechnischer Messungen mit den Messgeräten NOR145. Die Vorverarbeitung der Messdaten erfolgt mit der Software NorReview. Die Daten werden als xlsm Datei importiert.')
 
-# Excel Datei hochladen
-uploaded_file = st.file_uploader("Dateien hochladen",type=['xlsm'])
+# Mehrere Dateien hochladen?
+mehrere = st.checkbox("Mehrere Dateien hochladen")
 
-if uploaded_file is not None:
-         
-    measuringprotocol = protocol(uploaded_file)
-    markers = measuringprotocol.markers
-    #metadata = konfiguration(uploaded_file).to_dict(orient='records')[0]
+if mehrere:
+    uploaded_files = st.file_uploader(
+        "Dateien hochladen", type=['xlsm'], accept_multiple_files=True)
+    verfahren = st.radio(
+        "Verfahren zur Ermittlung des maßgeblichen Ergebnisses",
+        ["Maximalpegel", "Mittelwert (energetisch)"])
+else:
+    single_file = st.file_uploader("Datei hochladen", type=['xlsm'])
+    uploaded_files = [single_file] if single_file is not None else []
+    verfahren = "Maximalpegel"
 
-    #marker_names = st.multiselect("Marker:", markers)
+if uploaded_files:
+
+    protocols = []
+    for f in uploaded_files:
+        p = protocol(f)
+        p.dateiname = f.name
+        protocols.append(p)
 
     titel = st.text_input("Titel", "Schalltechnische Immissionsmessung bei der Musterfirma GmbH in Musterstadt")
 
@@ -23,16 +34,22 @@ if uploaded_file is not None:
 
     beschreibung = st.text_area("Beschreibung", "Die Messung wurde durchgeführt, um die Schallimmissionen der Musterfirma GmbH zu überprüfen. Die Messung fand am 01.01.2023 statt. Die Wetterbedingungen waren optimal für die Messung.")
 
+    others = sorted({m for p in protocols for m in p.markers}
+                    - {"Gesamt", "Ohne Marker"})
+    marker_optionen = ["Gesamt", "Ohne Marker"] + others
+    spektrum_marker = st.selectbox("Marker für Spektrum", marker_optionen)
+
     filename = st.text_input("Dateiname", "Messbericht.docx")
 
     metadata = {}
     metadata["titel"] = titel
     metadata["thema"] = thema
     metadata["beschreibung"] = beschreibung
-    #metadata["marker_names"] = marker_names
+    metadata["verfahren"] = verfahren
+    metadata["spektrum_marker"] = spektrum_marker
 
     st.download_button(
-        "Bericht herunterladen", 
-        data=renderreport(measuringprotocol, metadata), 
-        file_name=filename, 
+        "Bericht herunterladen",
+        data=renderreport(protocols, metadata),
+        file_name=filename,
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
